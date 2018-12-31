@@ -47,7 +47,7 @@ void FeatureTracker::process(cv::Mat &frame, cv::Mat &output, cv::Mat &mask) {
     finder->process(frame, output, mask);
 
     // 4. handle the accepted tracked points
-    handleTrackedPoints(frame, output);
+    //handleTrackedPoints(frame, output);
 
     // 5. current points and image become previous ones
     std::swap(points[1], points[0]);

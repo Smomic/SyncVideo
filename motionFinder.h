@@ -5,6 +5,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include <algorithm>
+#include <map>
 
 class MotionFinder {
 

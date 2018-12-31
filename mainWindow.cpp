@@ -125,6 +125,7 @@ void MainWindow::on_actionReset_triggered() {
     setLoadFirstVideoActionEnabled(true);
     setLoadSecondVideoActionEnabled(true);
     setResetActionEnabled(false);
+    setSaveActionEnabled(false);
     oneVideoSet = false;
     image = QImage();
 }

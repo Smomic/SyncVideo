@@ -78,21 +78,31 @@ void MotionFinder::drawRectangles(cv::Mat &output) {
 cv::Mat MotionFinder::createMask(cv::Mat &output) {
     cv::Mat mask = cv::Mat::zeros(output.size(), CV_8U);
     cv::Mat roi = cv::Mat(mask, cv::Rect(getMovingObjectContour(output)));
-    //cv::Mat(mask, cv::Rect(10, 1000, 1850, 70));
+    //cv::Mat(mask, cv::Rect(100, 970, 1250, 70));
     cv::bitwise_not(mask, mask);
     return mask;
 }
 
 cv::Rect MotionFinder::getMovingObjectContour(cv::Mat &output) {
+    std::map<unsigned, unsigned> myMap;
+
     if (!trackedFeatures.empty()) {
         for (auto const &point : trackedFeatures) {
-            for (auto const &rect : boundingRectangles) {
-                if (abs(cv::norm(point - getCenter(rect))) < opticalFlowDistance) {
-                    rectangle(output, rect, cv::Scalar(0, 255, 0), 2, 8, 0);
-                    return rect;
+            for (unsigned i = 0; i < imageContours.size(); ++i) {
+
+                if (cv::pointPolygonTest(imageContours[i], point, false) > 0) {
+                    myMap[i]++;
+                    break;
                 }
             }
         }
     }
+    if (!myMap.empty()) {
+        unsigned value = myMap.rbegin()->first;
+        cv::Rect rect(boundingRect(cv::Mat(imageContours[value])));
+        // rectangle(output, rect, cv::Scalar(0, 255, 0), 2, 8, 0);
+        return rect;
+    }
+
     return cv::Rect();
 }

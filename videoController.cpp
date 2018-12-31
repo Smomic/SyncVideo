@@ -29,14 +29,12 @@ void VideoController::setInputFile(VideoProcessor *video, const std::string &fil
 }
 
 void VideoController::setOutputFileName(const std::string &filename) {
-    if (isOutputSet)
-        return;
-
-    outputVideo = new VideoProcessor();
-    if (filename.empty()) {
+    if (filename.empty() && outputVideo) {
         outputVideo->releaseOutput();
         return;
     }
+
+    outputVideo = new VideoProcessor();
 
     bool result = (firstVideo->isOpened()) ? outputVideo->setOutput(filename, firstVideo->getFrameSize(),
                                                                     firstVideo->getFrameRate())
