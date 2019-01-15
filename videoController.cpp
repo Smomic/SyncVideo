@@ -1,6 +1,7 @@
 #include "videoController.h"
+#include <iostream>
 
-VideoController::VideoController() : firstVideo(new VideoProcessor()), secondVideo(new VideoProcessor()) {}
+VideoController::VideoController() : firstVideo(new InputProcessor()), secondVideo(new InputProcessor()), matrixSize(cv::Size(0,0)) {}
 
 VideoController::~VideoController() {
     delete firstVideo;
@@ -10,68 +11,81 @@ VideoController::~VideoController() {
         delete outputVideo;
 }
 
-void VideoController::setFirstInputFileName(const std::string &fileName) {
-    setInputFile(firstVideo, fileName);
+void VideoController::setFirstInput(const std::string &fileName) {
+    setInput(firstVideo, fileName);
 }
 
-void VideoController::setSecondInputFileName(const std::string &fileName) {
-    setInputFile(secondVideo, fileName);
+void VideoController::setSecondInput(const std::string &fileName) {
+    setInput(secondVideo, fileName);
 }
 
-void VideoController::setInputFile(VideoProcessor *video, const std::string &fileName) {
-    if (fileName.empty())
-        video->releaseInput();
-    else {
-        bool result = video->setInput(fileName);
-        if (!result)
-            emit(openingInputError(fileName));
-    }
-}
-
-void VideoController::setOutputFileName(const std::string &filename) {
-    if (filename.empty() && outputVideo) {
-        outputVideo->releaseOutput();
+void VideoController::setInput(InputProcessor *input, const std::string &fileName) {
+    if (resetInput(input, fileName))
         return;
+
+    if (!input->set(fileName))
+        emit(openingInputError(fileName));
+}
+
+bool VideoController::resetInput(InputProcessor *input, const std::string &fileName) {
+    if (fileName.empty()) {
+        input->release();
+        return true;
     }
+    return false;
+}
 
-    outputVideo = new VideoProcessor();
+void VideoController::setOutput(const std::string &fileName) {
+    if (resetOutput(fileName))
+        return;
 
-    bool result = (firstVideo->isOpened()) ? outputVideo->setOutput(filename, firstVideo->getFrameSize(),
-                                                                    firstVideo->getFrameRate())
-                                           : outputVideo->setOutput(filename, secondVideo->getFrameSize(),
-                                                                    secondVideo->getFrameRate());
-    if (!result)
-        emit(openingOutputError(filename));
+    outputVideo = new OutputProcessor();
+    InputProcessor *opened = getOpenedInput();
+
+    if (!outputVideo->set(fileName, opened->getFrameSize(), opened->getFrameRate()))
+        emit(openingOutputError(fileName));
     else
         isOutputSet = true;
 }
 
-void VideoController::stop() {
-    firstVideo->setStop(true);
-    secondVideo->setStop(true);
+bool VideoController::resetOutput(const std::string &filename) {
+    if (filename.empty()) {
+        if (isOutputSet) {
+            outputVideo->release();
+            isOutputSet = false;
+        }
+        return true;
+    }
+    return false;
+}
+
+InputProcessor* VideoController::getOpenedInput() {
+    return (firstVideo->isOpened()) ? firstVideo : secondVideo;
 }
 
 void VideoController::run() {
-    setFeatureTracker(firstVideo);
-    setFeatureTracker(secondVideo);
     setDelay();
-
-    firstVideo->setStop(false);
-    secondVideo->setStop(false);
+    setStop(false);
 
     cv::Mat firstOriginalFrame, secondOriginalFrame;
     cv::Mat firstOutput, secondOutput;
     cv::Mat output;
     std::unique_ptr<VideoFitter> fitter(new VideoFitter());
+    std::unique_ptr<MotionFinder> firstFinder(new MotionFinder());
+    std::unique_ptr<MotionFinder> secondFinder(new MotionFinder());
     cv::Mat firstMask, secondMask;
 
     while(isInputEnded()) {
-        if (!firstVideo->run(firstOriginalFrame, firstOutput, firstMask)
-                || !secondVideo->run(secondOriginalFrame, secondOutput, secondMask))
+        if (!firstVideo->run(firstOriginalFrame)
+                || !secondVideo->run(secondOriginalFrame))
             break;
 
+        processMask(firstMask);
+        firstMask.copyTo(secondMask);
+        firstFinder->process(firstOriginalFrame, firstOutput, firstMask);
+        secondFinder->process(secondOriginalFrame, secondOutput, secondMask);
         fitter->process(firstOutput, secondOutput, firstMask, secondMask);
-        addWeighted(secondOutput, blending, secondOriginalFrame, 1 - blending, 0.0, output);
+        blendFrames(secondOutput, secondOriginalFrame, output);
 
         if (isOutputSet)
             outputVideo->writeNextFrame(output);
@@ -81,39 +95,68 @@ void VideoController::run() {
     emit(inputEnded());
 }
 
+void VideoController::blendFrames(cv::Mat &first, cv::Mat &second, cv::Mat &output) {
+    addWeighted(first, blending, second, 1 - blending, gamma, output);
+}
+
 void VideoController::setDelay() {
     firstVideo->setDelay(100. / firstVideo->getFrameRate());
     secondVideo->setDelay(100. / secondVideo->getFrameRate());
 }
 
+void VideoController::setStop(bool value) {
+    firstVideo->setStop(value);
+    secondVideo->setStop(value);
+}
+
+void VideoController::processMask(cv::Mat &mask) {
+    mask = cv::Mat::zeros(matrixSize, CV_8U);
+    cv::Rect rect;
+    for (auto &m : maskRectangles) {
+        rect.x = int(m->rect().left() / scaleRatio);
+        rect.y = int(m->rect().top() / scaleRatio);
+        rect.width = int(m->rect().width() / scaleRatio);
+        rect.height = int(m->rect().height() / scaleRatio);
+        rectangle(mask, rect, 255, -1);
+    }
+    cv::bitwise_not(mask, mask);
+}
 
 bool VideoController::isInputEnded() {
     return !firstVideo->isStopped() && !secondVideo->isStopped();
 }
 
 void VideoController::changeFirstInputPosition(int value) {
-    long pos = firstVideo->getFrameNumber() + value;
-    if (isFrameNumberCorrect(firstVideo, pos))
-        setFirstInputPosition(pos);
+    changeInputPosition(firstVideo, value);
 }
 
 void VideoController::changeSecondInputPosition(int value) {
-    long pos = secondVideo->getFrameNumber() + value;
-    if (isFrameNumberCorrect(secondVideo, pos))
-        setSecondInputPosition(pos);
+    changeInputPosition(secondVideo, value);
+}
+
+void VideoController::changeInputPosition(InputProcessor *input, int value) {
+    long pos = input->getFrameNumber() + value;
+    if (isFrameNumberCorrect(input, pos)) {
+        (input == firstVideo) ? setFirstInputPosition(pos)
+                              : setSecondInputPosition(pos);
+    }
 }
 
 void VideoController::setFirstInputPosition(long value) {
-    firstVideo->setFrameNumber(value);
-    viewActualFrame(firstVideo, secondVideo);
+    setInputPosition(firstVideo, value);
 }
 
 void VideoController::setSecondInputPosition(long value) {
-    secondVideo->setFrameNumber(value);
-    viewActualFrame(secondVideo, firstVideo);
+    setInputPosition(secondVideo, value);
 }
 
-void VideoController::viewActualFrame(VideoProcessor *first, VideoProcessor *second) {
+void VideoController::setInputPosition(InputProcessor *input, long value) {
+    input->setFrameNumber(value);
+    (input == firstVideo) ? viewActualFrame(input, secondVideo)
+                          : viewActualFrame(input, firstVideo);
+}
+
+void VideoController::viewActualFrame(InputProcessor *first, InputProcessor *second) {
     cv::Mat output;
     first->setFrameNumber(first->getFrameNumber() - 1);
     first->readNextFrame(output);
@@ -127,7 +170,8 @@ void VideoController::viewActualFrame(VideoProcessor *first, VideoProcessor *sec
             emit(incorrectFrameSizeError());
             return;
         }
-        addWeighted(output, blending, secondOutput, 1 - blending, 0.0, output);
+        blendFrames(output, secondOutput, output);
+        setMatrixSize(output.size());
     }
     emit(sendFrame(output));
 }
@@ -147,12 +191,10 @@ bool VideoController::checkInputFrameSize(const std::string &fileName) {
     }
 
     capture.read(frame);
-
     cv::Mat secondFrame;
-    result = (firstVideo->isOpened()) ? getOpenedVideoFrame(firstVideo, secondFrame)
-                                      : getOpenedVideoFrame(secondVideo, secondFrame);
+    InputProcessor *opened = getOpenedInput();
 
-    if (!result) {
+    if (!getOpenedVideoFrame(opened, secondFrame)) {
         emit(readingInputError(fileName));
         return false;
     }
@@ -161,4 +203,16 @@ bool VideoController::checkInputFrameSize(const std::string &fileName) {
         return false;
 
     return true;
+}
+
+void VideoController::setMatrixSize(cv::Size size) {
+    matrixSize = size;
+}
+
+void VideoController::setMaskRectangles(std::vector<QGraphicsRectItem *> rectangles) {
+    maskRectangles = rectangles;
+}
+
+void VideoController::setScaleRatio(double ratio) {
+    scaleRatio = ratio;
 }

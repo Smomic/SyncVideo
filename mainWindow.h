@@ -11,9 +11,11 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QSlider>
+#include <QPainter>
 
 #include <opencv2/opencv.hpp>
 #include "videoController.h"
+#include "mainScene.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,33 +26,23 @@ class MainWindow : public QMainWindow {
 
     Ui::MainWindow *ui;
     VideoController *controller;
+    MainScene *scene;
     QImage image;
-    const char *acceptedVideoFormats = "*.avi *.mp4 *.mpg";
+    QGraphicsPixmapItem *pixMapItem;
+
+    const char *acceptedFormats = "*.avi *.mp4 *.mpg";
     const char *windowName = "SyncVideo";
     const int changePositionButtonStep = 1;
     bool oneVideoSet = false;
     bool synchronizingStarted = false;
     bool errorOccurred = false;
 
-    bool isInputFileNameCorrect(QString);
-    void viewColorImage(cv::Mat &);
-    void viewGreyImage(cv::Mat &);
-    void setImageInLabel();
-    void resizeEvent(QResizeEvent *);
-    void setButtonsEnabled(bool);
-    void changeTimeSliderPosition(QSlider *, int);
-    void setResetActionEnabled(bool);
-    void setLoadFirstVideoActionEnabled(bool);
-    void setLoadSecondVideoActionEnabled(bool);
-    void setStartButtonEnabled();
-    bool checkInputFrameSize(QString);
-    void setSaveActionEnabled(bool);
-    void changeSliderOnProcessed();
-    bool shouldImageScaled(QSize, QSize);
-
 public:
     explicit MainWindow(QWidget * = nullptr);
     ~MainWindow();
+
+    QGraphicsPixmapItem *getPixMap() const;
+    void setPixMap(QGraphicsPixmapItem *value);
 
 private slots:
     void on_actionOpen_First_Video_triggered();
@@ -72,6 +64,26 @@ private slots:
     void onOpeningInputError(const std::string &);
     void onOpeningOutputError(const std::string &);
     void onReadingInputError(const std::string &);
+
+private:
+    bool isInputFileNameCorrect(QString);
+    void viewColorImage(cv::Mat &);
+    void viewGreyImage(cv::Mat &);
+    void setImageInLabel();
+
+    void setButtonsEnabled(bool);
+    void changeTimeSliderPosition(QSlider *, int);
+    void setResetActionEnabled(bool);
+    void setLoadFirstVideoActionEnabled(bool);
+    void setLoadSecondVideoActionEnabled(bool);
+    void setStartButtonEnabled();
+    bool checkInputFrameSize(QString);
+    void setSaveActionEnabled(bool);
+    void changeSliderOnProcessed();
+    bool shouldImageScaled(QSize, QSize);
+protected:
+    void closeEvent(QCloseEvent *event);
+    void resizeEvent(QResizeEvent *);
 
 };
 

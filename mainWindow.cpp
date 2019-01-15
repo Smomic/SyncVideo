@@ -5,13 +5,19 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    controller(new VideoController()) {
+    controller(new VideoController()),
+    scene(new MainScene(this)) {
 
     ui->setupUi(this);
     ui->stopButton->setEnabled(false);
     ui->gridLayout = qobject_cast<QGridLayout*>(ui->centralWidget->layout());
-    ui->label->setAlignment(Qt::AlignCenter);
     setWindowTitle(windowName);
+    pixMapItem = new QGraphicsPixmapItem();
+    ui->graphicsView->setScene(scene);
+    scene->addItem(pixMapItem);
+    ui->graphicsView->setHorizontalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+    ui->graphicsView->setVerticalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+    ui->graphicsView->show();
     connect(controller, &VideoController::sendFrame, this, &MainWindow::onFrameProcessed);
     connect(controller, &VideoController::inputEnded, this, &MainWindow::onVideoEnded);
     connect(controller, &VideoController::openingInputError, this, &MainWindow::onOpeningInputError);
@@ -26,13 +32,13 @@ MainWindow::~MainWindow() {
 
 void MainWindow::on_actionOpen_First_Video_triggered() {
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load First Video"), "/home/michal/SyncVideo/data",
-                                                    tr("Videos (") + tr(acceptedVideoFormats) +  tr(")"));
+                                                    tr("Load First Video"), QDir::homePath(),
+                                                    tr("Videos (") + tr(acceptedFormats) +  tr(")"));
     if (!isInputFileNameCorrect(fileName)
             || (oneVideoSet && !checkInputFrameSize(fileName)))
         return;
 
-    controller->setFirstInputFileName(fileName.toUtf8().constData());
+    controller->setFirstInput(fileName.toUtf8().constData());
     controller->setFirstInputPosition(1);
     ui->firstTimeSlider->setEnabled(true);
     ui->firstTimeSlider->setMaximum(controller->getNumberOfFrames(false));
@@ -44,17 +50,18 @@ void MainWindow::on_actionOpen_First_Video_triggered() {
     ui->firstForward->setEnabled(true);
     setSaveActionEnabled(true);
     setLoadFirstVideoActionEnabled(false);
+    scene->setDrawEnabled(true);
 }
 
 void MainWindow::on_actionOpen_Second_Video_triggered() {
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load Second Video"), "/home/michal/SyncVideo/data",
-                                                    tr("Videos (") + tr(acceptedVideoFormats) +  tr(")"));
+                                                    tr("Load Second Video"), QDir::homePath(),
+                                                    tr("Videos (") + tr(acceptedFormats) +  tr(")"));
     if (!isInputFileNameCorrect(fileName) ||
             (oneVideoSet && !checkInputFrameSize(fileName)))
         return;
 
-    controller->setSecondInputFileName(fileName.toUtf8().constData());
+    controller->setSecondInput(fileName.toUtf8().constData());
     controller->setSecondInputPosition(1);
     ui->secondTimeSlider->setEnabled(true);
     ui->secondTimeSlider->setMaximum(controller->getNumberOfFrames(true));
@@ -66,6 +73,7 @@ void MainWindow::on_actionOpen_Second_Video_triggered() {
     ui->secondBackward->setEnabled(true);
     setSaveActionEnabled(true);
     setLoadSecondVideoActionEnabled(false);
+    scene->setDrawEnabled(true);
 }
 
 bool MainWindow::isInputFileNameCorrect(QString name) {
@@ -100,12 +108,12 @@ bool MainWindow::checkInputFrameSize(QString fileName) {
 
 void MainWindow::on_actionSave_Output_Video_triggered() {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save Output Video"), "/home/michal/SyncVideo/data",
-                                                    tr("Videos (") + tr(acceptedVideoFormats) +  tr(")"));
+                                                    tr("Save Output Video"), QDir::homePath(),
+                                                    tr("Videos (") + tr(acceptedFormats) +  tr(")"));
     if (fileName.isEmpty())
         return;
 
-    controller->setOutputFileName(fileName.toUtf8().constData());
+    controller->setOutput(fileName.toUtf8().constData());
 }
 
 void MainWindow::setSaveActionEnabled(bool value) {
@@ -113,10 +121,12 @@ void MainWindow::setSaveActionEnabled(bool value) {
 }
 
 void MainWindow::on_actionReset_triggered() {
-    ui->label->setPixmap(QPixmap());
-    controller->setFirstInputFileName("");
-    controller->setSecondInputFileName("");
-    controller->setOutputFileName("");
+    pixMapItem->setPixmap(QPixmap());
+    scene->reset();
+    ui->graphicsView->viewport()->update();
+    controller->setFirstInput("");
+    controller->setSecondInput("");
+    controller->setOutput("");
     setWindowTitle(windowName);
     setButtonsEnabled(false);
     ui->stopButton->setEnabled(false);
@@ -128,6 +138,7 @@ void MainWindow::on_actionReset_triggered() {
     setSaveActionEnabled(false);
     oneVideoSet = false;
     image = QImage();
+    scene->setDrawEnabled(false);
 }
 
 void MainWindow::setResetActionEnabled(bool value) {
@@ -137,12 +148,10 @@ void MainWindow::setResetActionEnabled(bool value) {
 
 void MainWindow::setLoadFirstVideoActionEnabled(bool value) {
     ui->menuSyncVideo->actions().at(0)->setEnabled(value);
-
 }
 
 void MainWindow::setLoadSecondVideoActionEnabled(bool value) {
     ui->menuSyncVideo->actions().at(1)->setEnabled(value);
-
 }
 
 void MainWindow::on_startButton_pressed() {
@@ -150,6 +159,10 @@ void MainWindow::on_startButton_pressed() {
     synchronizingStarted = true;
     setResetActionEnabled(false);
     setSaveActionEnabled(false);
+    scene->setDrawEnabled(false);
+    scene->hideMaskRectangles();
+    controller->setMaskRectangles(scene->getMaskRectangles());
+    controller->setScaleRatio(double(pixMapItem->pixmap().width())/ double(image.size().width()));
     controller->run();
 }
 
@@ -158,7 +171,9 @@ void MainWindow::on_stopButton_pressed() {
     synchronizingStarted = false;
     setResetActionEnabled(true);
     setSaveActionEnabled(true);
-    controller->stop();
+    scene->setDrawEnabled(true);
+    scene->showMaskRectangles();
+    controller->setStop(true);
 }
 
 void MainWindow::setButtonsEnabled(bool value) {
@@ -188,6 +203,7 @@ void MainWindow::onFrameProcessed(cv::Mat &frame) {
 
         if (synchronizingStarted)
             changeSliderOnProcessed();
+
     }
     qApp->processEvents();
 }
@@ -195,6 +211,7 @@ void MainWindow::onFrameProcessed(cv::Mat &frame) {
 void MainWindow::viewColorImage(cv::Mat &frame) {
     QImage qimg(frame.data, frame.cols, frame.rows, int(frame.step), QImage::Format_RGB888);
     image = qimg.rgbSwapped();
+
     setImageInLabel();
 }
 
@@ -204,11 +221,21 @@ void MainWindow::viewGreyImage(cv::Mat &frame) {
 }
 
 void MainWindow::setImageInLabel() {
-    if (shouldImageScaled(image.size(), ui->label->size()))
-        ui->label->setPixmap(QPixmap::fromImage(image).scaled(ui->label->size(),
-                                                              Qt::KeepAspectRatio, Qt::FastTransformation));
+    if (shouldImageScaled(image.size(), ui->graphicsView->size())) {
+        QPixmap pMap = QPixmap::fromImage(image).scaled(ui->graphicsView->size(),
+                                                        Qt::KeepAspectRatio, Qt::FastTransformation);
+        pixMapItem->setPixmap(pMap);
+    }
     else
-        ui->label->setPixmap(QPixmap::fromImage(image));
+        pixMapItem->setPixmap(QPixmap::fromImage(image));
+
+    scene->setPixmapSize(pixMapItem->pixmap().size());
+    QRectF rect = scene->itemsBoundingRect();
+    rect.setWidth(ui->graphicsView->size().width());
+    rect.setHeight(ui->graphicsView->size().height());
+//    rect.setX(ui->graphicsView->size().width());
+//    rect.setY(ui->graphicsView->size().height());
+    scene->setSceneRect(rect);
 }
 
 bool MainWindow::shouldImageScaled(QSize imageSize, QSize labelSize) {
@@ -226,14 +253,6 @@ void MainWindow::on_firstTimeSlider_sliderMoved(int position) {
 
 void MainWindow::on_secondTimeSlider_sliderMoved(int position) {
     controller->setSecondInputPosition(position);
-}
-
-void MainWindow::resizeEvent(QResizeEvent* event) {
-    if (!ui->label->pixmap())
-        return;
-
-    setImageInLabel();
-    QMainWindow::resizeEvent(event);
 }
 
 void MainWindow::on_actionQuit_triggered() {
@@ -279,6 +298,8 @@ void MainWindow::onVideoEnded() {
     synchronizingStarted = false;
     setSaveActionEnabled(true);
     setResetActionEnabled(true);
+    scene->showMaskRectangles();
+    scene->setDrawEnabled(true);
 }
 
 void MainWindow::onOpeningInputError(const std::string &name) {
@@ -297,3 +318,18 @@ void MainWindow::onReadingInputError(const std::string &name) {
                          tr("Cannot open ") + tr(name.c_str()));
     errorOccurred = true;
 }
+
+void MainWindow::closeEvent (QCloseEvent *event) {
+    Q_UNUSED(event);
+    on_actionQuit_triggered();
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event) {
+    if (scene->items().size() == 0 || !pixMapItem)
+        return;
+
+    setImageInLabel();
+    QMainWindow::resizeEvent(event);
+}
+
+

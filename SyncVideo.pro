@@ -15,19 +15,27 @@ LIBS += -L/usr/lib -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_
 SOURCES += \
         main.cpp \
         mainWindow.cpp \
-    featureTracker.cpp \
     motionFinder.cpp \
     videoController.cpp \
     videoFitter.cpp \
-    videoProcessor.cpp
+    opticalFlowTracker.cpp \
+    inputProcessor.cpp \
+    outputProcessor.cpp \
+    keypointMatcher.cpp \
+    contourFinder.cpp \
+    mainScene.cpp
 
 HEADERS += \
         mainWindow.h \
-    featureTracker.h \
     motionFinder.h \
     videoFitter.h \
     videoController.h \
-    videoProcessor.h
+    opticalFlowTracker.h \
+    inputProcessor.h \
+    outputProcessor.h \
+    keypointMatcher.h \
+    contourFinder.h \
+    mainScene.h
 
 FORMS += \
         mainWindow.ui
