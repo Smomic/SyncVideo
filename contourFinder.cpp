@@ -11,31 +11,13 @@ void ContourFinder::process(cv::Mat &source) {
 
     calculateCanny(openingMatrix, cannyMatrix, source.type() << 10);
 
-    cv::Mat d, closingMatrix;
-    cv::threshold(cannyMatrix, d, 200, 255, cv::THRESH_BINARY);
-    findImageContours(d);
-
-    //   cv::namedWindow("Canny", cv::WINDOW_NORMAL);
-    // cv::resizeWindow("Canny", 1280, 720);
-    //  imshow("Canny", d);
-
-    // Draw contours
-    //        cv::RNG rng(12345);
-    //        cv::Mat drawing = cv::Mat::zeros(closingMatrix.size(), CV_8UC3);
-
-    //        for (int i = 0; i < imageContours.size(); i++) {
-    //            cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-    //            cv::drawContours(drawing, imageContours, i, color, 2, 8, hierarchy, 0, cv::Point());
-    //            //cv::drawContours(drawing, hull, i, color, 2, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-    //        }
-
-    //        namedWindow("Contours", cv::WINDOW_NORMAL);
-    //        cv::resizeWindow("Contours", 1280, 720);
-    //        imshow("Contours", drawing);
+    cv::Mat contoursMatrix;
+    cv::threshold(cannyMatrix, contoursMatrix, 200, 255, cv::THRESH_BINARY);
+    findImageContours(contoursMatrix);
 }
 
 void ContourFinder::calculateCanny(cv::Mat &source, cv::Mat &output, int size) {
-    double med = computeMedian(source, size);
+    double med = calculateMedian(source, size);
     int lower = int(fmax(0, (1-ratio)*med));
     int higher = int(fmin(255, (1+ratio)*med));
 

@@ -233,8 +233,6 @@ void MainWindow::setImageInLabel() {
     QRectF rect = scene->itemsBoundingRect();
     rect.setWidth(ui->graphicsView->size().width());
     rect.setHeight(ui->graphicsView->size().height());
-//    rect.setX(ui->graphicsView->size().width());
-//    rect.setY(ui->graphicsView->size().height());
     scene->setSceneRect(rect);
 }
 
@@ -249,10 +247,12 @@ void MainWindow::changeSliderOnProcessed() {
 
 void MainWindow::on_firstTimeSlider_sliderMoved(int position) {
     controller->setFirstInputPosition(position);
+    std::cout << "first: " << position << std::endl;
 }
 
 void MainWindow::on_secondTimeSlider_sliderMoved(int position) {
     controller->setSecondInputPosition(position);
+        std::cout << "second: " << position << std::endl;
 }
 
 void MainWindow::on_actionQuit_triggered() {

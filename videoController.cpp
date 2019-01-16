@@ -1,5 +1,4 @@
 #include "videoController.h"
-#include <iostream>
 
 VideoController::VideoController() : firstVideo(new InputProcessor()), secondVideo(new InputProcessor()), matrixSize(cv::Size(0,0)) {}
 
@@ -73,17 +72,20 @@ void VideoController::run() {
     std::unique_ptr<VideoFitter> fitter(new VideoFitter());
     std::unique_ptr<MotionFinder> firstFinder(new MotionFinder());
     std::unique_ptr<MotionFinder> secondFinder(new MotionFinder());
-    cv::Mat firstMask, secondMask;
+    cv::Mat firstMask, secondMask, rectangleMask;
+    processMask(rectangleMask);
 
-    while(isInputEnded()) {
+    while(isInputEnded()) {     
         if (!firstVideo->run(firstOriginalFrame)
                 || !secondVideo->run(secondOriginalFrame))
             break;
 
-        processMask(firstMask);
-        firstMask.copyTo(secondMask);
+        rectangleMask.copyTo(firstMask);
+        rectangleMask.copyTo(secondMask);
+
         firstFinder->process(firstOriginalFrame, firstOutput, firstMask);
         secondFinder->process(secondOriginalFrame, secondOutput, secondMask);
+
         fitter->process(firstOutput, secondOutput, firstMask, secondMask);
         blendFrames(secondOutput, secondOriginalFrame, output);
 

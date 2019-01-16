@@ -15,7 +15,6 @@ class MotionFinder {
     std::vector<std::vector<cv::Point>> imageContours;
     std::unique_ptr<OpticalFlowTracker> tracker;
     std::unique_ptr<ContourFinder> contourFinder;
-    const double fractionOfMovingContours = 0.7;
 
 public:
     MotionFinder();
@@ -25,10 +24,8 @@ private:
     void findImageContours(cv::Mat &);
     void findOpticalFlowFeatures(cv::Mat &, cv::Mat &);
     cv::Mat createMask(cv::Mat &);
-    std::vector<cv::Rect> getMovingRectangles(cv::Mat &output);
-    std::vector<std::vector<cv::Point>> getContoursWithFeatures();
-    std::vector<cv::Rect> getBoundingRectangles(std::vector<std::vector<cv::Point>>);
-    std::vector<std::vector<cv::Point> > getContoursByFeaturesCount(std::map<unsigned, unsigned>, unsigned long);
+    cv::Rect getMovingObjectRectangle(cv::Mat &output);
+    std::vector<cv::Point> getContourWithMaximumFeatures();
 };
 
 

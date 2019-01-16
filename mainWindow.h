@@ -41,9 +41,6 @@ public:
     explicit MainWindow(QWidget * = nullptr);
     ~MainWindow();
 
-    QGraphicsPixmapItem *getPixMap() const;
-    void setPixMap(QGraphicsPixmapItem *value);
-
 private slots:
     void on_actionOpen_First_Video_triggered();
     void on_actionOpen_Second_Video_triggered();

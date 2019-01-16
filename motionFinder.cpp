@@ -15,35 +15,31 @@ void MotionFinder::findOpticalFlowFeatures(cv::Mat &frame, cv::Mat &output) {
 }
 
 void MotionFinder::findImageContours(cv::Mat &frame) {
-        contourFinder->process(frame);
+    contourFinder->process(frame);
 }
 
 cv::Mat MotionFinder::createMask(cv::Mat &output) {
     cv::Mat mask = cv::Mat::zeros(output.size(), CV_8U);
-    std::vector<cv::Rect> rectangles = getMovingRectangles(output);
-
-    for(auto &rect : rectangles)
-        rectangle(mask, rect, 255, -1);
-
+    cv::Rect rect = getMovingObjectRectangle(output);
+    rectangle(mask, rect, 255, -1);
     cv::bitwise_not(mask, mask);
     return mask;
 }
 
-std::vector<cv::Rect> MotionFinder::getMovingRectangles(cv::Mat &output) {
-    std::vector<std::vector<cv::Point>> maxContours = getContoursWithFeatures();
+cv::Rect MotionFinder::getMovingObjectRectangle(cv::Mat &output) {
+    std::vector<cv::Point> maxContour = getContourWithMaximumFeatures();
 
-    if(maxContours.empty())
-        return std::vector<cv::Rect>();
+    if(maxContour.empty())
+        return cv::Rect();
 
-
-    //rectangle(output, rect, cv::Scalar(0, 255, 0), 2, 8, 0);
-    return getBoundingRectangles(maxContours);
+    cv::Rect rect(boundingRect(cv::Mat(maxContour)));
+   // rectangle(output, rect, cv::Scalar(0, 255, 0), 2, 8, 0);
+    return rect;
 }
 
-std::vector<std::vector<cv::Point>> MotionFinder::getContoursWithFeatures() {
+std::vector<cv::Point> MotionFinder::getContourWithMaximumFeatures() {
     std::map<unsigned, unsigned> myMap;
     std::vector<cv::Point2f> trackedFeatures = tracker->getTrackedPoints();
-    std::vector<std::vector<cv::Point>> featureContours;
 
     if (!trackedFeatures.empty()) {
         for (auto const &point : trackedFeatures) {
@@ -55,46 +51,5 @@ std::vector<std::vector<cv::Point>> MotionFinder::getContoursWithFeatures() {
             }
         }
     }
-    return getContoursByFeaturesCount(myMap, trackedFeatures.size());
+    return myMap.empty() ? std::vector<cv::Point>() : imageContours[myMap.rbegin()->first];
 }
-
-std::vector<cv::Rect> MotionFinder::getBoundingRectangles(std::vector<std::vector<cv::Point>> movingContours) {
-    std::vector<cv::Rect> rectangles;
-    for(auto &c : movingContours) {
-        cv::Rect rect(boundingRect(cv::Mat(c)));
-        rectangles.push_back(rect);
-    }
-    return rectangles;
-}
-
-std::vector<std::vector<cv::Point>> MotionFinder::getContoursByFeaturesCount(std::map<unsigned, unsigned> cMap, unsigned long countOfFeatures) {
-    if (cMap.empty())
-        return std::vector<std::vector<cv::Point>>();
-
-    std::vector<std::vector<cv::Point>> movingContours;
-    movingContours.push_back(imageContours[cMap.rbegin()->first]);
-    unsigned featuresCount = 0;
-
-    for(std::map<unsigned, unsigned>::reverse_iterator it=cMap.rbegin(); it != cMap.rend() && featuresCount < fractionOfMovingContours * countOfFeatures; ++it) {
-            movingContours.push_back(imageContours[it->first]);
-            featuresCount += it->second;
-    }
-    return movingContours;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
