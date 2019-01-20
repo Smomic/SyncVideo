@@ -18,6 +18,8 @@ class MainScene : public QGraphicsScene {
     void rightButtonMousePressEvent(QGraphicsSceneMouseEvent *);
     void leftButtonMousePressEvent(QGraphicsSceneMouseEvent *);
     void checkMousePosition(QGraphicsSceneMouseEvent *);
+    bool checkCorners(QGraphicsSceneMouseEvent *);
+    void checkEdges(QGraphicsSceneMouseEvent *);
 
 public:
     MainScene(QObject* = 0) {}
@@ -27,6 +29,7 @@ public:
     void setPixmapSize(QSize size);
     void hideMaskRectangles();
     void showMaskRectangles();
+
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *);
     void mouseMoveEvent(QGraphicsSceneMouseEvent *);

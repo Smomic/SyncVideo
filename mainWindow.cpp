@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->show();
     connect(controller, &VideoController::sendFrame, this, &MainWindow::onFrameProcessed);
     connect(controller, &VideoController::inputEnded, this, &MainWindow::onVideoEnded);
+    connect(controller, &VideoController::sendFailureMessage, this, &MainWindow::onFailureMessage);
     connect(controller, &VideoController::openingInputError, this, &MainWindow::onOpeningInputError);
     connect(controller, &VideoController::openingOutputError, this, &MainWindow::onOpeningOutputError);
     connect(controller, &VideoController::readingInputError, this, &MainWindow::onReadingInputError);
@@ -233,6 +234,7 @@ void MainWindow::setImageInLabel() {
     QRectF rect = scene->itemsBoundingRect();
     rect.setWidth(ui->graphicsView->size().width());
     rect.setHeight(ui->graphicsView->size().height());
+    ui->statusBar->clearMessage();
     scene->setSceneRect(rect);
 }
 
@@ -247,12 +249,10 @@ void MainWindow::changeSliderOnProcessed() {
 
 void MainWindow::on_firstTimeSlider_sliderMoved(int position) {
     controller->setFirstInputPosition(position);
-    std::cout << "first: " << position << std::endl;
 }
 
 void MainWindow::on_secondTimeSlider_sliderMoved(int position) {
     controller->setSecondInputPosition(position);
-        std::cout << "second: " << position << std::endl;
 }
 
 void MainWindow::on_actionQuit_triggered() {
@@ -302,6 +302,11 @@ void MainWindow::onVideoEnded() {
     scene->setDrawEnabled(true);
 }
 
+void MainWindow::onFailureMessage() {
+    ui->statusBar->setStyleSheet("color: red");
+    ui->statusBar->showMessage(failureMessage);
+}
+
 void MainWindow::onOpeningInputError(const std::string &name) {
     QMessageBox::warning(this, tr("Opening input error"),
                          tr("Cannot open ") + tr(name.c_str()));
@@ -331,5 +336,4 @@ void MainWindow::resizeEvent(QResizeEvent* event) {
     setImageInLabel();
     QMainWindow::resizeEvent(event);
 }
-
 

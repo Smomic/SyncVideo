@@ -4,7 +4,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
-#include "opticalFlowTracker.h"
 #include <algorithm>
 #include <map>
 
@@ -17,6 +16,7 @@ class ContourFinder {
 public:
     void process(cv::Mat &);
     std::vector<std::vector<cv::Point>> getImageContours();
+
 private:
     static double calculateMedian(cv::Mat inputMatrix, int n) {
         cv::Mat cdf;

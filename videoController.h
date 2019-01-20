@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QGraphicsRectItem>
 #include <opencv2/core/mat.hpp>
+
 #include "inputProcessor.h"
 #include "outputProcessor.h"
 #include "videoFitter.h"
@@ -42,6 +43,7 @@ public:
 signals:
     void sendFrame(cv::Mat &);
     void inputEnded();
+    void sendFailureMessage();
     void openingInputError(const std::string &);
     void openingOutputError(const std::string &);
     void readingInputError(const std::string &);

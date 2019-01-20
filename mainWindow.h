@@ -11,7 +11,6 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QSlider>
-#include <QPainter>
 
 #include <opencv2/opencv.hpp>
 #include "videoController.h"
@@ -32,6 +31,7 @@ class MainWindow : public QMainWindow {
 
     const char *acceptedFormats = "*.avi *.mp4 *.mpg";
     const char *windowName = "SyncVideo";
+    const char *failureMessage = "Failure of sychronization";
     const int changePositionButtonStep = 1;
     bool oneVideoSet = false;
     bool synchronizingStarted = false;
@@ -58,6 +58,7 @@ private slots:
 
     void onFrameProcessed(cv::Mat &);
     void onVideoEnded();
+    void onFailureMessage();
     void onOpeningInputError(const std::string &);
     void onOpeningOutputError(const std::string &);
     void onReadingInputError(const std::string &);
@@ -78,8 +79,9 @@ private:
     void setSaveActionEnabled(bool);
     void changeSliderOnProcessed();
     bool shouldImageScaled(QSize, QSize);
+
 protected:
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *);
     void resizeEvent(QResizeEvent *);
 
 };

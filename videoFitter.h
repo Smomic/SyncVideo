@@ -1,9 +1,6 @@
 #ifndef VIDEOFITTER_H
 #define VIDEOFITTER_H
 
-#include <opencv2/core/mat.hpp>
-#include "opencv2/calib3d/calib3d.hpp"
-#include <opencv2/imgproc.hpp>
 #include "keypointMatcher.h"
 #include <iomanip>
 
@@ -16,6 +13,7 @@ class VideoFitter {
     constexpr static const double fractionOfGoodMatches = 0.7;
 
     void fitImages(cv::Mat &, cv::Mat &);
+
 public:
     VideoFitter();
     void process(cv::Mat &, cv::Mat &, cv::Mat &, cv::Mat &);
@@ -25,7 +23,7 @@ private:
         const int numGoodMatches = int(matches.size() * fractionOfGoodMatches);
         matches.erase(matches.begin() + numGoodMatches, matches.end());
     }
-    void transformImages(cv::Mat &firstFrame, cv::Mat &secondFrame, std::vector<cv::DMatch> matches);
+    void transformImages(cv::Mat &, cv::Mat &, std::vector<cv::DMatch>);
 };
 
 #endif //VIDEOFITTER_H

@@ -1,7 +1,6 @@
 #ifndef KEYPOINTMATCHER_H
 #define KEYPOINTMATCHER_H
 
-
 #include <opencv2/core/mat.hpp>
 #include "opencv2/calib3d/calib3d.hpp"
 #include <opencv2/imgproc.hpp>

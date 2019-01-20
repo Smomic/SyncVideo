@@ -1,9 +1,6 @@
 #ifndef MOTIONFINDER_H
 #define MOTIONFINDER_H
 
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/imgcodecs.hpp"
 #include "opticalFlowTracker.h"
 #include "contourFinder.h"
 #include <algorithm>

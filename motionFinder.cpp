@@ -33,7 +33,7 @@ cv::Rect MotionFinder::getMovingObjectRectangle(cv::Mat &output) {
         return cv::Rect();
 
     cv::Rect rect(boundingRect(cv::Mat(maxContour)));
-   // rectangle(output, rect, cv::Scalar(0, 255, 0), 2, 8, 0);
+    rectangle(output, rect, cv::Scalar(0, 0, 255), 2, 8, 0);
     return rect;
 }
 

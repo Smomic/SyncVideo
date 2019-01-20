@@ -68,6 +68,7 @@ void VideoController::run() {
 
     cv::Mat firstOriginalFrame, secondOriginalFrame;
     cv::Mat firstOutput, secondOutput;
+    cv::Mat previousFrame;
     cv::Mat output;
     std::unique_ptr<VideoFitter> fitter(new VideoFitter());
     std::unique_ptr<MotionFinder> firstFinder(new MotionFinder());
@@ -86,6 +87,8 @@ void VideoController::run() {
         firstFinder->process(firstOriginalFrame, firstOutput, firstMask);
         secondFinder->process(secondOriginalFrame, secondOutput, secondMask);
 
+        previousFrame = secondOutput.clone();
+
         fitter->process(firstOutput, secondOutput, firstMask, secondMask);
         blendFrames(secondOutput, secondOriginalFrame, output);
 
@@ -93,6 +96,9 @@ void VideoController::run() {
             outputVideo->writeNextFrame(output);
 
         emit(sendFrame(output));
+
+        if (sum(previousFrame != secondOutput) == cv::Scalar(0,0,0,0))
+            emit(sendFailureMessage());
     }
     emit(inputEnded());
 }

@@ -1,8 +1,6 @@
 #ifndef INPUTPROCESSOR_H
 #define INPUTPROCESSOR_H
 
-#include <QObject>
-#include <iomanip>
 #include <string>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
