@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef CONTOURFINDER_H
 #define CONTOURFINDER_H
 
@@ -10,10 +15,12 @@
 class ContourFinder {
 
     std::vector<std::vector<cv::Point>> imageContours;
+    unsigned acceptedContourCount;
+    int morphRadius;
     const double ratio = 0.33;
-    const unsigned acceptedContourCount = 70;
 
 public:
+    ContourFinder();
     void process(cv::Mat &);
     std::vector<std::vector<cv::Point>> getImageContours();
 

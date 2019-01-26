@@ -1,6 +1,11 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "opticalFlowTracker.h"
 
-OpticalFlowTracker::OpticalFlowTracker() : maxCountToDetect(10000), qualityLevel(0.1), minDistance(5.) {}
+OpticalFlowTracker::OpticalFlowTracker() : maxCountToDetect(10000), qualityLevel(0.1), minDistance(5.), minMovedDistance(2) {}
 
 void OpticalFlowTracker::process(cv::Mat &frame, cv::Mat &output) {
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
@@ -12,7 +17,6 @@ void OpticalFlowTracker::process(cv::Mat &frame, cv::Mat &output) {
     copyIfFirstFrame();
     trackPoints();
     removeIncorrectTrackedPoints();
-   // handleTrackedPoints(frame, output);
     swapPoints();
 
 }
@@ -28,11 +32,7 @@ void OpticalFlowTracker::addNewPoints() {
 }
 
 void OpticalFlowTracker::detectFeaturePoints() {
-    cv::goodFeaturesToTrack(gray, // the image
-                            opticalFlowPoints,   // the output detected features
-                            maxCountToDetect,  // the maximum number of features
-                            qualityLevel,     // quality level
-                            minDistance);   // min distance between two features
+    cv::goodFeaturesToTrack(gray, opticalFlowPoints, maxCountToDetect, qualityLevel, minDistance);
 }
 
 void OpticalFlowTracker::copyIfFirstFrame() {
@@ -41,11 +41,7 @@ void OpticalFlowTracker::copyIfFirstFrame() {
 }
 
 void OpticalFlowTracker::trackPoints() {
-    cv::calcOpticalFlowPyrLK(prevGray, gray, // 2 consecutive images
-                             trackedPoints[0], // input point position in first image
-            trackedPoints[1], // output point postion in the second image
-            pointStatus,    // tracking success
-            trackingError);      // tracking error
+    cv::calcOpticalFlowPyrLK(prevGray, gray, trackedPoints[0], trackedPoints[1], pointStatus, trackingError);
 }
 
 void OpticalFlowTracker::removeIncorrectTrackedPoints() {
@@ -57,30 +53,18 @@ void OpticalFlowTracker::removeIncorrectTrackedPoints() {
             trackedPoints[1][k++] = trackedPoints[1][i];
         }
     }
-
-    // eliminate unsuccesful points
     trackedPoints[1].resize(k);
     initialPosition.resize(k);
 }
 
-
-// determine which tracked point should be accepted
-// here we keep only moving points
 bool OpticalFlowTracker::isOpticalFlowPointCorrect(int i) {
 
-    return pointStatus[i] && // status is false if unable to track point i
-            // if point has moved
-            (abs(trackedPoints[0][i].x - trackedPoints[1][i].x) +
-            (abs(trackedPoints[0][i].y - trackedPoints[1][i].y)) > 2);
+    return pointStatus[i] && isPointMoved(i);
 }
 
-// handle the currently tracked points
-void OpticalFlowTracker::handleTrackedPoints(cv::Mat &frame, cv::Mat &output) {
-
-    // for all tracked points
-    for (int i = 0; i < trackedPoints[1].size(); i++) {
-        cv::circle(output, trackedPoints[1][i], 3, cv::Scalar(0, 0, 255), -1);
-    }
+bool OpticalFlowTracker::isPointMoved(int i) {
+    return abs(trackedPoints[0][i].x - trackedPoints[1][i].x) +
+                (abs(trackedPoints[0][i].y - trackedPoints[1][i].y)) > minMovedDistance;
 }
 
 void OpticalFlowTracker::swapPoints() {

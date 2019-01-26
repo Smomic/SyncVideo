@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "inputProcessor.h"
 
 InputProcessor::InputProcessor() : delayBetweenFrames(-1), frameNumber(0), stop(false) {}

@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef KEYPOINTMATCHER_H
 #define KEYPOINTMATCHER_H
 

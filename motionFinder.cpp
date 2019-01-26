@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "motionFinder.h"
 
 MotionFinder::MotionFinder() : imageContours(0), tracker(new OpticalFlowTracker()), contourFinder(new ContourFinder())  {}
@@ -20,21 +25,19 @@ void MotionFinder::findImageContours(cv::Mat &frame) {
 
 cv::Mat MotionFinder::createMask(cv::Mat &output) {
     cv::Mat mask = cv::Mat::zeros(output.size(), CV_8U);
-    cv::Rect rect = getMovingObjectRectangle(output);
+    cv::Rect rect = getMovingObjectRectangle();
     rectangle(mask, rect, 255, -1);
     cv::bitwise_not(mask, mask);
     return mask;
 }
 
-cv::Rect MotionFinder::getMovingObjectRectangle(cv::Mat &output) {
+cv::Rect MotionFinder::getMovingObjectRectangle() {
     std::vector<cv::Point> maxContour = getContourWithMaximumFeatures();
 
     if(maxContour.empty())
         return cv::Rect();
 
-    cv::Rect rect(boundingRect(cv::Mat(maxContour)));
-    rectangle(output, rect, cv::Scalar(0, 0, 255), 2, 8, 0);
-    return rect;
+    return boundingRect(cv::Mat(maxContour));
 }
 
 std::vector<cv::Point> MotionFinder::getContourWithMaximumFeatures() {

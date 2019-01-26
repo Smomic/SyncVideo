@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "videoController.h"
 
 VideoController::VideoController() : firstVideo(new InputProcessor()), secondVideo(new InputProcessor()), matrixSize(cv::Size(0,0)) {}
@@ -70,7 +75,7 @@ void VideoController::run() {
     cv::Mat firstOutput, secondOutput;
     cv::Mat previousFrame;
     cv::Mat output;
-    std::unique_ptr<VideoFitter> fitter(new VideoFitter());
+    std::unique_ptr<VideoMatcher> fitter(new VideoMatcher());
     std::unique_ptr<MotionFinder> firstFinder(new MotionFinder());
     std::unique_ptr<MotionFinder> secondFinder(new MotionFinder());
     cv::Mat firstMask, secondMask, rectangleMask;
@@ -97,7 +102,7 @@ void VideoController::run() {
 
         emit(sendFrame(output));
 
-        if (sum(previousFrame != secondOutput) == cv::Scalar(0,0,0,0))
+        if (!isFrameChanged(previousFrame, secondOutput))
             emit(sendFailureMessage());
     }
     emit(inputEnded());
@@ -132,6 +137,10 @@ void VideoController::processMask(cv::Mat &mask) {
 
 bool VideoController::isInputEnded() {
     return !firstVideo->isStopped() && !secondVideo->isStopped();
+}
+
+bool VideoController::isFrameChanged(cv::Mat &previous, cv::Mat &actual) {
+    return sum(previous != actual) != cv::Scalar(0,0,0,0);
 }
 
 void VideoController::changeFirstInputPosition(int value) {

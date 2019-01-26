@@ -1,11 +1,18 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "contourFinder.h"
+
+ContourFinder::ContourFinder() : acceptedContourCount(70), morphRadius(9) {}
 
 void ContourFinder::process(cv::Mat &source) {
     cv::Mat greyMatrix;
     cvtColor(source, greyMatrix, cv::COLOR_BGR2GRAY);
     blur(source, greyMatrix, cv::Size(3, 3));
     cv::Mat openingMatrix;
-    cv::morphologyEx(greyMatrix, openingMatrix, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9)));
+    cv::morphologyEx(greyMatrix, openingMatrix, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(morphRadius, morphRadius)));
     cv::Mat cannyMatrix;
     std::vector<cv::Vec4i> hierarchy;
 
@@ -45,7 +52,7 @@ void ContourFinder::morphologyProcess(cv::Mat &source, int type, int counter) {
     cv::Mat morfology;
     for (int i = 0; i < counter; ++i) {
         cv::morphologyEx(source, morfology, type,
-                         cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9, 9)));
+                         cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morphRadius, morphRadius)));
         source = morfology.clone();
     }
 }

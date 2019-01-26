@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "outputProcessor.h"
 
 bool OutputProcessor::set(const std::string &fileName, cv::Size frameSize, double frameRate, bool isColor) {

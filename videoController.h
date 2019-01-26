@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef VIDEOCONTROLLER_H
 #define VIDEOCONTROLLER_H
 
@@ -7,7 +12,7 @@
 
 #include "inputProcessor.h"
 #include "outputProcessor.h"
-#include "videoFitter.h"
+#include "videoMatcher.h"
 #include "motionFinder.h"
 
 class VideoController : public QObject {
@@ -18,8 +23,8 @@ class VideoController : public QObject {
     OutputProcessor *outputVideo;
     std::vector<QGraphicsRectItem*> maskRectangles;
     cv::Size matrixSize;
-    bool isOutputSet = false;
     double scaleRatio;
+    bool isOutputSet = false;
     const double blending = 0.5;
     const double gamma = 0.0;
 
@@ -67,6 +72,7 @@ private:
     void setInput(InputProcessor *, const std::string &);
     void setDelay();
     bool isInputEnded();
+    bool isFrameChanged(cv::Mat &, cv::Mat &);
     void viewActualFrame(InputProcessor *, InputProcessor *);
     InputProcessor* getOpenedInput();
     void changeInputPosition(InputProcessor *, int);

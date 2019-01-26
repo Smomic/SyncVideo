@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef MAINSCENE_H
 #define MAINSCENE_H
 

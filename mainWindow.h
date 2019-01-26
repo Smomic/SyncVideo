@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -15,6 +20,8 @@
 #include <opencv2/opencv.hpp>
 #include "videoController.h"
 #include "mainScene.h"
+#include "ui_mainWindow.h"
+#include "videoController.h"
 
 namespace Ui {
 class MainWindow;

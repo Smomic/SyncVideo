@@ -1,13 +1,18 @@
-#include "videoFitter.h"
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
 
-VideoFitter::VideoFitter() : matcher(new KeypointMatcher()) {}
+#include "videoMatcher.h"
 
-void VideoFitter::process(cv::Mat &sourceFirst, cv::Mat &sourceSecond, cv::Mat &firstMask, cv::Mat &secondMask) {
+VideoMatcher::VideoMatcher() : matcher(new KeypointMatcher()) {}
+
+void VideoMatcher::process(cv::Mat &sourceFirst, cv::Mat &sourceSecond, cv::Mat &firstMask, cv::Mat &secondMask) {
     matcher->process(sourceFirst, sourceSecond, firstMask, secondMask);
-    fitImages(sourceFirst, sourceSecond);
+    matchImages(sourceFirst, sourceSecond);
 }
 
-void VideoFitter::fitImages(cv::Mat &firstFrame, cv::Mat &secondFrame){
+void VideoMatcher::matchImages(cv::Mat &firstFrame, cv::Mat &secondFrame){
     std::vector<cv::DMatch> matches = matcher->getMatches();
     if (matches.empty())
         return;
@@ -24,7 +29,7 @@ void VideoFitter::fitImages(cv::Mat &firstFrame, cv::Mat &secondFrame){
     transformImages(firstFrame, secondFrame, matches);
 }
 
-void VideoFitter::transformImages(cv::Mat &firstFrame, cv::Mat &secondFrame, std::vector<cv::DMatch> matches) {
+void VideoMatcher::transformImages(cv::Mat &firstFrame, cv::Mat &secondFrame, std::vector<cv::DMatch> matches) {
     std::vector<cv::Point2f> firstMatchedPoints, secondMatchedPoints;
     for (auto &m : matches) {
         firstMatchedPoints.push_back(firstKeypoints[unsigned(m.queryIdx)].pt);

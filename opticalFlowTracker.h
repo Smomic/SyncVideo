@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef OPTICALFLOWTRACKER_H
 #define OPTICALFLOWTRACKER_H
 
@@ -15,6 +20,7 @@ class OpticalFlowTracker {
     int maxCountToDetect;
     double qualityLevel;
     double minDistance;
+    double minMovedDistance;
     std::vector<uchar> pointStatus;
     std::vector<float> trackingError;
 
@@ -30,9 +36,10 @@ private:
     void detectFeaturePoints();
     void copyIfFirstFrame();
     bool isOpticalFlowPointCorrect(int);
-    void handleTrackedPoints(cv::Mat &, cv::Mat &);
     void removeIncorrectTrackedPoints();
+    bool isPointMoved(int);
     void swapPoints();
+
 };
 
 #endif //OPTICALFLOWTRACKER_H

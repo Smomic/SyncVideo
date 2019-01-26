@@ -1,6 +1,9 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #include "mainWindow.h"
-#include "ui_mainWindow.h"
-#include "videoController.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

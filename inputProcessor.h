@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef INPUTPROCESSOR_H
 #define INPUTPROCESSOR_H
 

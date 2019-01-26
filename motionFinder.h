@@ -1,3 +1,8 @@
+/*
+ * Title: Spatial synchronization of video sequences
+ * Author: Michał Smoła
+ */
+
 #ifndef MOTIONFINDER_H
 #define MOTIONFINDER_H
 
@@ -21,7 +26,7 @@ private:
     void findImageContours(cv::Mat &);
     void findOpticalFlowFeatures(cv::Mat &, cv::Mat &);
     cv::Mat createMask(cv::Mat &);
-    cv::Rect getMovingObjectRectangle(cv::Mat &output);
+    cv::Rect getMovingObjectRectangle();
     std::vector<cv::Point> getContourWithMaximumFeatures();
 };
 
